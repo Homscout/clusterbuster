@@ -21,11 +21,11 @@ export const defaultCacheOptions: TileCacheOptions = {
   },
 };
 
-export function Cache(
+export async function Cache(
   customCacheOptions: TileCacheOptions = defaultCacheOptions
 ) {
-  let lruCache = null;
-  let redisCache = null;
+  let lruCache: any = null;
+  let redisCache: any = null;
   const cacheOptions = {
     ...defaultCacheOptions,
     ...customCacheOptions,
@@ -41,7 +41,7 @@ export function Cache(
   };
 
   if (cacheOptions.type === 'lru-cache') {
-    const LRU = require('lru-cache');
+    const LRU = require('lru-cache')
     lruCache = new LRU(cacheOptions.lruOptions);
   } else if (cacheOptions.type === 'redis') {
     const Redis = require('ioredis');
@@ -65,7 +65,7 @@ export function Cache(
       x: number,
       y: number,
       filters: string[]
-    ): string => {
+    ): string | null => {
       if (!cacheOptions.enabled || !cacheOptions.enable) {
         return null;
       }
@@ -88,11 +88,11 @@ export function Cache(
       }
 
       if (cacheOptions.type === 'lru-cache') {
-        return lruCache.get(key);
+        return lruCache?.get(key);
       }
 
       if (cacheOptions.type === 'redis') {
-        return await redisCache.getBuffer(key);
+        return await redisCache?.getBuffer(key);
       }
 
       // Invalid type
@@ -112,16 +112,16 @@ export function Cache(
       ttl?: number
     ): Promise<void> => {
       if (!cacheOptions.enabled || !cacheOptions.enable) {
-        return null;
+        return;
       }
 
       if (cacheOptions.type === 'lru-cache') {
-        lruCache.set(key, value);
+        lruCache?.set(key, value);
       } else if (cacheOptions.type === 'redis') {
         if (!!ttl) {
-          await redisCache.set(key, value, 'EX', ttl);
+          await redisCache?.set(key, value, 'EX', ttl);
         } else {
-          await redisCache.set(key, value);
+          await redisCache?.set(key, value);
         }
       }
     },

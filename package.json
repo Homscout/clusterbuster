@@ -12,7 +12,8 @@
     "start": "yarn build && ts-node example/express.ts",
     "babel": "babel js --out-dir dist --extensions \".ts\" --exclude \"**/__test__/*\"",
     "test": "jest",
-    "semantic-release": "semantic-release"
+    "semantic-release": "semantic-release",
+    "postinstall": "yarn build"
   },
   "peerDependencies": {
     "ioredis": "^4.14.1",

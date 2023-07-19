@@ -11,24 +11,15 @@ import { zip } from './zip';
 export async function TileServer<T>({
   maxZoomLevel = 12,
   cacheOptions = defaultCacheOptions,
-  pgPoolOptions = {},
+  queryExecutor,
   filtersToWhere = null,
   attributes = [],
   debug = false,
 }: TileServerConfig<T>): Promise<TileRenderer<T>> {
-  const { Pool } = require('pg');
-  const pool = new Pool({
-    max: 100,
-    ...pgPoolOptions,
-  });
-  pool.on('error', (err) => {
-    debug && console.error('Unexpected error on idle client', err);
-    process.exit(-1);
-  });
 
-  const cache = Cache(cacheOptions);
+  const cache = await Cache(cacheOptions);
 
-  await createSupportingSQLFunctions(pool);
+  await createSupportingSQLFunctions(queryExecutor);
 
   return async ({
     z,
@@ -53,15 +44,16 @@ export async function TileServer<T>({
       debug && console.time('query' + id);
       const cacheKey = cache.getCacheKey(table, z, x, y, filtersQuery);
       try {
-        const value = await cache.getCacheValue(cacheKey);
+        const value = cacheKey ? await cache.getCacheValue(cacheKey) : null;
         if (value) {
+          console.log("Using cached value!");
           return value;
         }
       } catch (e) {
         // In case the cache get fail, we continue to generate the tile
         debug && console.log({ e });
       }
-      let query: string;
+      let query: string = '';
 
       z = parseInt(`${z}`, 10);
       if (isNaN(z)) {
@@ -92,13 +84,17 @@ export async function TileServer<T>({
           zoomToDistance,
           getBaseQuery,
         });
-        const result = await pool.query(query);
+        const result = await queryExecutor(query);
         debug && console.timeEnd('query' + id);
 
         debug && console.time('gzip' + id);
-        const tile = await zip(result.rows[0].mvt);
+        console.log(result[0].mvt);
+        const tile = await zip(result[0].mvt);
+        console.log('tile:')
+        console.log(tile);
         debug && console.timeEnd('gzip' + id);
 
+        if (cacheKey) {
         try {
           await cache.setCacheValue(
             cacheKey,
@@ -109,6 +105,7 @@ export async function TileServer<T>({
           // In case the cache set fail, we should return the generated tile
           debug && console.log({ e });
         }
+      }
 
         return tile;
       } catch (e) {

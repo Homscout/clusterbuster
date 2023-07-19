@@ -1,5 +1,6 @@
-import { PoolConfig } from 'pg';
 import { TileCacheOptions } from './TileCacheOptions';
+
+export type QueryFn<T = any> = (query: string, parameters?: any[] | undefined) => Promise<T>;
 
 /**
  * @description Configuration options for the tile server
@@ -25,15 +26,9 @@ export interface TileServerConfig<T> {
   cacheOptions?: TileCacheOptions;
 
   /**
-   * @description Configuration options for the postgres connection pool
-   * clusterbuster tries to provide sane defaults
-   */
-  pgPoolOptions?: PoolConfig;
-
-  /**
    * @description Optional callback to map the filters to where conditions in PostGreSQL
    */
-  filtersToWhere?: (queryParams: T | {}) => string[];
+  filtersToWhere?: ((queryParams: T | {}) => string[]) | null;
 
   /**
    * @description Attributes to select from the table
@@ -44,4 +39,7 @@ export interface TileServerConfig<T> {
    * @description Show debug logging, default false
    */
   debug?: boolean;
+
+  queryExecutor: QueryFn<T>;
+
 }

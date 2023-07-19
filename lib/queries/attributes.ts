@@ -2,7 +2,7 @@
  * Creates an SQL fragment of the dynamic attributes to an sql select statement
  */
 export const attributesToSelect = (attributes: string[]) =>
-  attributes.length > 0 ? `, ${attributes.join(', ')}` : '';
+  attributes.length > 0 ? `, ${attributes.map(a => `"${a}"`).join(', ')}` : '';
 
 /**
  * Creates an SQL fragmemt which selects the first value of an attribute using the FIRST aggregate function
@@ -10,7 +10,7 @@ export const attributesToSelect = (attributes: string[]) =>
 export const attributesFirstToSelect = (attributes: string[]) =>
   attributes.length > 0
     ? `${attributes
-        .map((attribute) => `FIRST(${attribute}) as ${attribute}`)
+        .map((attribute) => `FIRST("${attribute}") as "${attribute}"`)
         .join(', ')},`
     : '';
 
@@ -20,5 +20,5 @@ export const attributesFirstToSelect = (attributes: string[]) =>
 export const attributesToArray = (attributes: string[]) =>
   attributes.length > 0
     ? ', ' +
-      attributes.map((attribute) => `'${attribute}', ${attribute}`).join(', ')
+      attributes.map((attribute) => `'${attribute}', "${attribute}"`).join(', ')
     : '';
